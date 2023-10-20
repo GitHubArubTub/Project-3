@@ -7,7 +7,7 @@ import streamlit as st
 from dotenv import load_dotenv
 load_dotenv()
 st.set_page_config(layout="wide")
-ALFA_VANTAGE_API_KEY = os.getenv("ALPACA_API_KEY")
+ALFA_VANTAGE_API_KEY = os.getenv("ALFA_VANTAGE_API_KEY")
 
 
 # Searsh Symbol
