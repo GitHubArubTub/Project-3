@@ -56,11 +56,15 @@ class Xbrl:
         # Switch columns and rows so that US GAAP items are rows and each column header represents a date
         return balance_sheet.T
 
-    def clean_data(self, balance_sheet):
+    def clean_data(self, balance_sheets_merged, balance_sheet_2023):
+        balance_sheets_merged = balance_sheets_merged.sort_index().reset_index()
+        balance_sheets_merged = balance_sheets_merged.applymap(lambda x: pd.to_numeric(x, errors= 'ignore'))
         # Aggregate by index and take max
-        balance_sheets = balance_sheet.groupby('index').max()
+        balance_sheets = balance_sheets_merged.groupby('index').max()
+
         # Reindex
-        # balance_sheets = balance_sheets.reindex(balance_sheet.index)
+        balance_sheets = balance_sheets.reindex(balance_sheet_2023.index)
+
         # Drop columns before 2019 and filter out non-annual data
         cols_to_drop = []
         for col in balance_sheets.columns:
@@ -84,7 +88,7 @@ class Xbrl:
         balance_sheets = balance_sheets[sorted(balance_sheets.columns)]
         return balance_sheets
 
-    def query_tick_dates(self, ticker, date_start, date_end):
+    def query_tick_filings(self, ticker, date_start, date_end):
         query_srt = f"ticker:{ticker} AND filedAt:[{date_start} TO {date_end}] AND formType:\"10-K\""
         query = {
             "query": { "query_string": { 
@@ -108,11 +112,14 @@ class Xbrl:
         # filter to use only 10-K documents
         doc_10_k_urls = documents_df.loc[documents_df["description"] == "10-K", "documentUrl"].values
         balance_sheets = pd.DataFrame()
+        balance_sheet_json = None
         # Read each document and concat the reult to the balance sheet dataFrame
+        print(doc_10_k_urls)
         for document_url in doc_10_k_urls:
             xbrl_json = self.xbrlApi.xbrl_to_json(htm_url=document_url)
             balance_sheet_json = self.get_balance_sheet(xbrl_json)
             balance_sheets = pd.concat([balance_sheets, balance_sheet_json], axis=0, sort=False)
+        balance_sheets = self.clean_data(balance_sheets, balance_sheet_json)
         return balance_sheets
 
 
@@ -147,7 +154,8 @@ if st.sidebar.button("Balance Sheet"):
             st.sidebar.error('Please, fill in all fields.')
         else:
             # Query for the documents
-            json_filings = Xbrl().query_tick_dates(ticker_search, date_start, date_end)
+            # json_filings = None
+            json_filings = Xbrl().query_tick_filings(ticker_search, date_start, date_end)
             company_name = json_filings.get('companyName')
             balance_sheets = Xbrl().get_balance_sheet_from_api(json_filings)
             st.write(f"""### Balance Sheets of {company_name}""")
