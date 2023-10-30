@@ -59,20 +59,12 @@ class Gpt:
             sentiment_analysis = "Sentiment analysis error: " + str(e)
         return sentiment_analysis
 
-    def read_news_articles(self, news_articles, ticker_symbol, rate_limit):
-        # Initialize variables for rate limiting
-        api_requests = 0
+    def read_news_articles(self, news_articles, ticker_symbol):        
         # Create a list to store data
         data_list = []
         # Extract data and add it to the list
-        print(news_articles)
         for article in news_articles:
             title = article.get("title", "No Title")
-
-            # Implement rate limiting
-            api_requests += 1
-            if api_requests >= rate_limit:
-                break
 
             # Perform sentiment analysis with OpenAI
             sentiment_analysis = self.perform_sentiment_analysis(title)
