@@ -1,6 +1,6 @@
 # Project-3
 
-# Stock Analysis with OpenAI and BART Machine Learning
+# Stock Analysis with OpenAI and BERT Machine Learning
 
 This project leverages AI, specifically the OpenAI API and BERT Machine Learning, to perform stock analysis. It retrieves balance sheet information, extracts relevant fundamental data, and pulls news articles from the web and it employs two methods to determine the sentiment (positive or negative) of the news.
 
