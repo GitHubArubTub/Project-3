@@ -27,6 +27,7 @@ class Fmp:
         logging.info("Cleanning FMP data")
         # drop unneeded rows
         df = df.drop(columns=['cik', 'link', 'finalLink'])
+        df = df.sort_values(by='date')
         # Extracting year from the 'date' column
         df['year'] = df['date'].str.split('-').str[0]
         # Setting the 'year' column as the index
@@ -48,6 +49,7 @@ class Fmp:
 
         # Drop specific columns
         df = df.drop(columns=['cik', 'link', 'finalLink'])
+        df = df.sort_values(by='date')
 
         # Set the 'date' field as index and transpose
         df_transposed = df.set_index('date').T
@@ -67,6 +69,7 @@ class Fmp:
 
         # Drop specific columns
         df = df.drop(columns=['cik', 'link', 'finalLink'])
+        df = df.sort_values(by='date')
 
         # Set the 'date' field as index and transpose
         df_transposed = df.set_index('date').T
