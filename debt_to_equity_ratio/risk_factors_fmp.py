@@ -1,6 +1,7 @@
 # python -m streamlit run risk_factors_fmp.py
 import os
 import requests
+import logging
 import openai
 import pandas as pd
 import streamlit as st
@@ -10,6 +11,8 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 load_dotenv()
 st.set_page_config(layout="wide")
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Fmp:
@@ -21,6 +24,7 @@ class Fmp:
         url = f"https://financialmodelingprep.com/api/v3/balance-sheet-statement/{ticker}?apikey={self.API_KEY}&limit={years}"
 
         # Fetch the data
+        logging.info("Getting BAlance Sheets from financialmodelingprep api")
         response = requests.get(url)
         data = response.json()
 
@@ -29,6 +33,7 @@ class Fmp:
         return df
 
     def clean_data(self, df):
+        logging.info("Cleanning data")
         # drop unneeded rows
         df = df.drop(columns=['cik', 'link', 'finalLink'])
         # Extracting year from the 'date' column
@@ -47,21 +52,26 @@ class Gpt:
 
     def analyze_balance_sheet_with_gpt(df):
         # Convert DataFrame to a string representation for sending to GPT
-        balance_sheet_str = df.to_string()
-        prompt_text = f"Please analyze the following balance sheet data for the last few years:\n\n{balance_sheet_str}\n\nProvide insights on the assets, liabilities, and equity trends, and evaluate if the investing risk has increased in 750 words or less."
-        # Make API call to OpenAI
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt_text,
-            max_tokens=1000
-        )
-
+        try:
+            balance_sheet_str = df.to_string()
+            prompt_text = f"Please analyze the following balance sheet data for the last few years:\n\n{balance_sheet_str}\n\nProvide insights on the assets, liabilities, and equity trends, and evaluate if the investing risk has increased in 750 words or less."
+            # Make API call to OpenAI
+            logging.info("Analyzing balance sheet with gpt")
+            response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=prompt_text,
+                max_tokens=1000
+            )
+        except Exception as e:
+            sentiment_analysis = "Sentiment analysis error: " + str(e)
+            logging.error(sentiment_analysis)
         # Print GPT's analysis
         return response.choices[0].text.strip()
     
     def perform_sentiment_analysis(title):
         # Perform sentiment analysis with OpenAI
         try:
+            logging.info("Processing sentimental analysis")
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -84,6 +94,7 @@ class Gpt:
             sentiment_analysis = response['choices'][0]['message']['content']
         except Exception as e:
             sentiment_analysis = "Sentiment analysis error: " + str(e)
+            logging.error(sentiment_analysis)
         return sentiment_analysis
 
 
@@ -152,6 +163,7 @@ class Polygon:
         # Define the API endpoint for Polygon.io
         polygon_endpoint = f"https://api.polygon.io/v2/reference/news?ticker={ticker_symbol}&limit={news_limit}&apiKey={self.POLYGON}"
         # Make the API request to Polygon.io
+        logging.info("Make the API request to Polygon.io")
         response = requests.get(polygon_endpoint)
 
         # Check if the request was successful
@@ -204,7 +216,7 @@ class Polygon:
         return filtered_df
 
 
-# #### STREAMLIT
+# #### STREAMLIT ####
 ticker_search = st.sidebar.text_input("Ticker:", value="PTON").upper()
 years_search = st.sidebar.number_input("Years:", value=5, min_value=1, max_value=5)
 
@@ -257,7 +269,7 @@ if st.sidebar.button("Sentiment analysis"):
 
             if sentiment_counts.size > 0:
                 # Plot the bar chart
-                plt.figure(figsize=(3, 6))
+                plt.figure(figsize=(1.6, 1.2))
                 sentiment_counts.plot(kind='bar', color=['g', 'r'])
                 plt.xlabel('Sentiment')
                 plt.ylabel('Count')
