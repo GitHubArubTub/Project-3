@@ -31,11 +31,12 @@ The application will provide you with the results of the stock analysis.
 
 ## Required Libraries
 
-- Library 1
-- Library 2
-- Library 3
-...
-- Library n
+streamlit
+altair (include on streamlit)
+requests
+dotenv
+pandas
+openai
 
 Please make sure to manually install the required libraries before running the application.
 
